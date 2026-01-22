@@ -6,7 +6,7 @@ const {
   getAllRawMaterials,
   updateRawMaterial,
   deleteRawMaterial
-} = require("../controllers/rawMaterialController");
+} = require("../controller/RawMaterial.controller");
 
 
 router.post("/add", createRawMaterial);

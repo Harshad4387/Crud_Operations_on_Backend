@@ -6,9 +6,26 @@ const connect = require("./db/db");
 const cors = require('cors');
 connect();
 app.use(cors());
+const cron = require("node-cron");
+const axios = require("axios");
+app.use(morgan("dev"));
+app.use(express.json());
+app.use(express.urlencoded({}));
 
+cron.schedule("*/5 * * * *", async () => {
+    try {
+        console.log("⏰ Cron: Pinging server...");
+        await axios.get("https://hm053-tech-titans-2-0.onrender.com/");
+    } catch (err) {
+        console.log("Cron error:", err.message);
+    }
+});
 
+const rawMaterial = require("./route/Rawmaterial.route");
+app.use("/api/crud/rawmaterial" , rawMaterial );
 
+const product = require("./route/Product.route");
+app.use("/api/crud/product" , product );
 
 const port = process.env.PORT;
 app.listen(port, ()=>{
