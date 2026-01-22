@@ -21,6 +21,10 @@ cron.schedule("*/5 * * * *", async () => {
     }
 });
 
+app.get("/" , async(req,res)=>{
+    res.status(200).json("server is running fine build by harshu");
+})
+
 const rawMaterial = require("./route/Rawmaterial.route");
 app.use("/api/crud/rawmaterial" , rawMaterial );
 
