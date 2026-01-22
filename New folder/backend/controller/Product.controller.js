@@ -77,7 +77,7 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-// UPDATE PRODUCT
+
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
