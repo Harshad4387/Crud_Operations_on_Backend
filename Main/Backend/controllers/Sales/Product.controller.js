@@ -1,5 +1,7 @@
 const ProductionRequest = require("../../models/Request");
 const Product = require("../../models/Product.model");
+const ProductHistory = require("../../models/History_Product.model"); // ✅ added
+
 
 const getAllProducts = async (req, res) => {
   try {
@@ -25,16 +27,15 @@ const getAllProducts = async (req, res) => {
     });
   }
 };
+
 const allCompleted = async (req, res) => {
   try {
-    // ✅ Find all completed production requests
     const completedRequests = await ProductionRequest.find({ status: "completed" })
       .populate({ path: "product", select: "name quantity assemblyTime remarks" })
       .populate({ path: "requestedBy", select: "name email role" })
       .populate({ path: "assignedTo", select: "name email role" })
-      .sort({ completedAt: -1 }); // latest completed first
+      .sort({ completedAt: -1 });
 
-    // ✅ If none found, respond gracefully
     if (!completedRequests || completedRequests.length === 0) {
       return res.status(200).json({
         success: true,
@@ -44,7 +45,6 @@ const allCompleted = async (req, res) => {
       });
     }
 
-    // ✅ Format data for frontend
     const formattedData = completedRequests.map((reqDoc) => ({
       id: reqDoc._id,
       product: reqDoc.product ? reqDoc.product.name : "N/A",
@@ -59,7 +59,6 @@ const allCompleted = async (req, res) => {
       remarks: reqDoc.remarks || "",
     }));
 
-    // ✅ Send response
     res.status(200).json({
       success: true,
       message: "All completed production requests fetched successfully",
@@ -76,11 +75,13 @@ const allCompleted = async (req, res) => {
   }
 };
 
+// -----------------------------
+// MARK AS RECEIVED + UPDATE PRODUCT + LOG HISTORY
+// -----------------------------
 const received = async (req, res) => {
   try {
     const { requestId } = req.body;
 
-  
     if (!requestId) {
       return res.status(400).json({
         success: false,
@@ -88,7 +89,6 @@ const received = async (req, res) => {
       });
     }
 
-  
     const request = await ProductionRequest.findById(requestId);
     if (!request) {
       return res.status(404).json({
@@ -111,7 +111,6 @@ const received = async (req, res) => {
       });
     }
 
-   
     const product = await Product.findById(request.product);
     if (!product) {
       return res.status(404).json({
@@ -120,15 +119,36 @@ const received = async (req, res) => {
       });
     }
 
- 
+    // =============================
+    // 🧠 HISTORY TRACKING START
+    // =============================
+    const oldQuantity = product.quantity;
+
+    // Update product quantity
     product.quantity += request.quantity;
     await product.save();
 
- 
+    // Save history log
+    await ProductHistory.create({
+      productId: product._id,
+      updatedFields: ["quantity"],
+      updatedFieldsCount: 1,
+      oldValues: {
+        quantity: oldQuantity,
+      },
+      newValues: {
+        quantity: product.quantity,
+      },
+      updatedBy: "system", // replace with req.user.id if auth added
+    });
+    // =============================
+    // 🧠 HISTORY TRACKING END
+    // =============================
+
+    // Update request status
     request.status = "received";
     await request.save();
 
-   
     res.status(200).json({
       success: true,
       message: "Production request marked as received and product quantity updated successfully",
@@ -140,6 +160,7 @@ const received = async (req, res) => {
         status: request.status,
       },
     });
+
   } catch (error) {
     console.error("Error updating request to received:", error);
     res.status(500).json({
@@ -149,4 +170,5 @@ const received = async (req, res) => {
     });
   }
 };
-module.exports = { getAllProducts ,allCompleted,received};
+
+module.exports = { getAllProducts, allCompleted, received };

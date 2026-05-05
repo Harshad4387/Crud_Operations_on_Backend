@@ -1,5 +1,7 @@
 const ProductionRequest = require("../../models/Request");
-//done
+const Product = require("../../models/Product.model");
+const mongoose = require("mongoose");
+
 const PendingRequest = async (req, res) => {
   try {
     const pendingRequests = await ProductionRequest.find({ status: "pending" })
@@ -14,21 +16,24 @@ const PendingRequest = async (req, res) => {
       });
     }
 
-    // ✅ Include _id so frontend has a valid Mongo ObjectId
     const formattedData = pendingRequests.map((reqDoc) => ({
-      _id: reqDoc._id, // ✅ add this
+      _id: reqDoc._id,
+      productId: reqDoc.product ? reqDoc.product._id : null,
       product: reqDoc.product ? reqDoc.product.name : "N/A",
+
       quantity: reqDoc.quantity,
       remarks: reqDoc.remarks || "",
       requestedBy: reqDoc.requestedBy ? reqDoc.requestedBy.name : "Unknown",
     }));
 
+    console.log(formattedData);
     res.status(200).json({
       success: true,
       message: "Pending production requests fetched successfully",
       totalRequests: formattedData.length,
       data: formattedData,
     });
+
   } catch (error) {
     console.error("Error fetching pending requests:", error);
     res.status(500).json({
@@ -132,12 +137,14 @@ const getALLacceptedByWoker = async (req, res) => {
     const formattedData = acceptedRequests.map((reqDoc) => ({
       id: reqDoc._id,
       product: reqDoc.product ? reqDoc.product.name : "N/A",
+       productId: reqDoc.product?._id || null, 
       quantity: reqDoc.quantity,
       remarks: reqDoc.remarks || "",
       requestedBy: reqDoc.requestedBy ? reqDoc.requestedBy.name : "Unknown",
       status: reqDoc.status,
       startedAt: reqDoc.startedAt,
     }));
+    console.log(formattedData);
 
     res.status(200).json({
       success: true,
@@ -309,9 +316,60 @@ const allCompletedWork = async (req, res) => {
   }
 };
 
+const getRawMaterialsOfProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 🔴 1. Check missing or "undefined"
+    if (!id || id === "undefined") {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    // 🔴 2. Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Product ID format",
+      });
+    }
+
+    // 🔍 Populate only name
+    const product = await Product.findById(id)
+      .populate("materials.rawMaterial", "name");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // 🔥 Keep SAME STRUCTURE as schema
+    const materials = product.materials.map((item) => ({
+      rawMaterial: item.rawMaterial?.name || "N/A",
+      quantityRequired: item.quantityRequired
+    }));
+
+    res.status(200).json({
+      success: true,
+      productId: product._id,   // ✅ helpful for frontend
+      productName: product.name,
+      data: materials
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+};
 
 
- 
-
-module.exports = { PendingRequest  , acceptRequest,getALLacceptedByWoker,MyWork ,completed , allCompletedWork};
+module.exports = { PendingRequest  , acceptRequest,getALLacceptedByWoker,MyWork ,completed , allCompletedWork , getRawMaterialsOfProduct};
 

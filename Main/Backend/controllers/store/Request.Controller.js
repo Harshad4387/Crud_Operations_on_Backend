@@ -1,7 +1,7 @@
 const ProductionRequest = require("../../models/Request");
 const Product = require("../../models/Product.model");
 const User = require("../../models/user.model");
-// const {checkMaterialAvailability} = require("../../utils/Sastistical_Inference/CheckMaterial");
+
 
 const createRequest = async (req, res) => {
   try {
@@ -105,7 +105,7 @@ const getAllRequests = async (req, res) => {
         requestedBy: reqDoc.requestedBy ? reqDoc.requestedBy.name : "Unknown",
         assignedTo: reqDoc.assignedTo ? reqDoc.assignedTo.name : "Unassigned",
         createdAt: reqDoc.createdAt,
-        updatedAt: reqDoc.updatedAt,   // ✅ Added updatedAt field
+        updatedAt: reqDoc.updatedAt,  
         startedAt: reqDoc.startedAt,
         completedAt: reqDoc.completedAt,
         remarks: reqDoc.remarks || "",
@@ -224,6 +224,49 @@ const collectedMaterial = async (req, res) => {
 //   }
 // };
 
+const getRawMaterialsOfProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    // 🔍 Populate only name
+    const product = await Product.findById(id)
+      .populate("materials.rawMaterial", "name");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // 🔥 Keep SAME STRUCTURE as schema
+    const materials = product.materials.map((item) => ({
+      rawMaterial: item.rawMaterial?.name || "N/A",
+      quantityRequired: item.quantityRequired
+    }));
+
+    res.status(200).json({
+      success: true,
+      productName: product.name,
+      data: materials
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+};
 
 
 
@@ -232,6 +275,5 @@ module.exports = {
   createRequest ,
    getAllRequests,
     getAcceptedRequests,
-    collectedMaterial,
-    
+    collectedMaterial,   
    };

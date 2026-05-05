@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const {PendingRequest , acceptRequest , getALLacceptedByWoker, MyWork,completed,allCompletedWork} = require("../../controllers/Production/Request.controller");
+const {PendingRequest , acceptRequest , getALLacceptedByWoker, MyWork,completed,allCompletedWork ,
+    getRawMaterialsOfProduct} = require("../../controllers/Production/Request.controller");
 const { verifyjwt } = require("../../Middleware/auth.middleware");
 
 //pending 
@@ -22,5 +23,9 @@ router.post("/completed" , verifyjwt , completed);
 
 // all complted 
 router.get("/my-completed" , verifyjwt , allCompletedWork)
+
+// get material of product 
+router.get("/product/:id/materials", verifyjwt, getRawMaterialsOfProduct);
+
 
 module.exports = router;

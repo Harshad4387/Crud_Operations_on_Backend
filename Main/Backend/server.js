@@ -23,11 +23,10 @@ app.use('/api/auth',auth);
 
 const store_rawMaterial = require("./routes/store/RawMaterial.route");
 const store_Product = require("./routes/store/Product.route");
-const PostMan = require("./routes/store/PostMan.route")
 const store_request = require("./routes/store/request.route");
 app.use("/api/store/RawMaterial",store_rawMaterial);
 app.use("/api/store/Product" , store_Product)
-app.use("/api/store/postman",PostMan)
+
 app.use("/api/store/request",store_request)
 
 const admin = require("./routes/Admin/admin.route");
