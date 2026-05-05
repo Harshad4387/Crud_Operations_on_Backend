@@ -119,9 +119,33 @@ const InwardRawMaterial = async (req, res) => {
   }
 };
 
+const getRawMaterialsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    // validate category
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        message: "Category is required",
+      });
+    }
+
+    const materials = await RawMaterial.find({ category }).sort({ UniqueId: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: materials.length,
+      data: materials,
+    });
+  } catch (error) {
+    console.error("Error fetching by category:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching category data.",
+    });
+  }
+};
 
 
-
-
-
-module.exports = {  getAllRawMaterials , InwardRawMaterial};
+module.exports = {  getAllRawMaterials , InwardRawMaterial , getRawMaterialsByCategory};

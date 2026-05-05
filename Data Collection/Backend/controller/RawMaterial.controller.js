@@ -64,7 +64,7 @@ const getAllRawMaterials = async (req, res) => {
 const updateRawMaterial = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, pieces, quantity, unit, supplier, remarks } = req.body;
+    const { name, pieces, quantity, unit, supplier, remarks, category } = req.body;
 
     const updatedRawMaterial = await RawMaterial.findByIdAndUpdate(
       id,
@@ -74,7 +74,8 @@ const updateRawMaterial = async (req, res) => {
         quantity,
         unit,
         supplier,
-        remarks
+        remarks,
+        category   
       },
       { new: true, runValidators: true }
     );
