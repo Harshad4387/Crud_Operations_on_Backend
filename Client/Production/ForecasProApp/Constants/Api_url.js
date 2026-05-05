@@ -1,1 +1,0 @@
-export const API_BASE_URL = "https://lh6zvgwv-3000.inc1.devtunnels.ms/api";
