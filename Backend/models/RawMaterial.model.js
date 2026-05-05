@@ -7,65 +7,18 @@ const rawMaterialSchema = new mongoose.Schema({
     type : Number ,
     required : true 
   },
-  category: {
-    type: String,
-    enum: [
-    "VIRAT FUSE",                
-    "CONTACTOR",           
-    "CONNECTORS",               
-    "CONVERTOR RELAY(RED RELAY)",
-    "MO. AUTO(GSM)",
-    "MK1 RELAY(BLACK)",
-    "MK2 DMC RELAY(WHITE)",
-    "MU RELAY",
-    "VIRAT CAPACITOR",
-    "EPCOSS CAPACITOR",
-    "BOX CAPACITOR",
-    "COIL",
-    "MCB",
-    "BASE",
-    "8MM DOL STATER(B)",
-    "10MM DOLSTATER(DMC)",
-    "MU2 DMC STATER",
-    "PATTIKIT",
-    "SWITCH",
-    "METER",
-    "TRANSFORMER",
-    "WIRE",
-    "READY WIRE SETS",
-    "WIRE CONECTOR",
-    "BLANCK PCB",
-    "READY PCB",
-    "SANMAN CAPACITOR",
-    "METAL/PLASTIK BODY",
-    "SCREW",
-    "OUTER BOX",
-    "KNOB \\ CLAMP \\ AUXILIRY",
-    "ELECTRONIC COMPONENTS",
-    "READY PANEL",
-    "STICKER",
-    "SOLDER METAL",
-    "NUTBOLT(3mm)",
-    "GROMMET 9MM (3/8)",    
-    "OTHERS"               
-  ],
-    default: "OTHERS"
-  },
+
   quantity: { type: Number }, 
   unit: { 
     type: String, 
     enum: [
-      "PCS", 
+      "PCS", //NO
       "BOX", 
-      "SET",
-      "BANDAL",
-      "PACKET",
-      "-", 
-      "UNIT",
-      "NOS",
-      "KG"
+      "MTR",
+      "SET",//PKT
+      "CHART"//CHAT // Sticker
     ], 
-    default: "-"
+    default: ""
   },
   supplier: {
     type : String,

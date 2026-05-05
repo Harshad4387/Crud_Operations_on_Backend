@@ -8,10 +8,10 @@ connect();
 app.use(cors());
 
 app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit
+    : "50mb" }));
 
 app.use(morgan('dev'));
-
 
 app.get('/', (req,res)=>{
     res.status(200).json('server is running fine');
@@ -36,7 +36,6 @@ app.use("/api/admin" ,admin);
 const production = require("./routes/Production/request.route");
 app.use("/api/production" ,production );
 
-
 const sales = require("./routes/Sales/product.route")
 app.use("/api/sales" , sales );
 
@@ -46,3 +45,5 @@ const port = process.env.PORT;
 app.listen(port, ()=>{
     console.log('server is running on port 3000 ~ built by harshu');
 })
+//https://fc3thch8-3000.inc1.devtunnels.ms/
+//https://fc3thch8-3000.inc1.devtunnels.ms/

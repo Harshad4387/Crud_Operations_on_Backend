@@ -4,8 +4,9 @@ const ProductMaterial = require("../models/ProductComponent.model");
 
 const addRawMaterialusingpostman = async (req, res) => {
   try {
-    const materials = req.body;
+    let materials = req.body;
 
+    console.log("Total received:", materials.length);
 
     if (!Array.isArray(materials) || materials.length === 0) {
       return res.status(400).json({
@@ -14,27 +15,31 @@ const addRawMaterialusingpostman = async (req, res) => {
       });
     }
 
-  
-    for (let i = 0; i < materials.length; i++) {
-      const item = materials[i];
+    // CLEAN + VALIDATE FIELDS
+    materials = materials.map((item, index) => {
       if (!item.name) {
-        return res.status(400).json({
-          success: false,
-          message: `Name is required for item at index ${i}`,
-        });
+        console.log(`❌ Missing name at index ${index}:`, item);
+        throw new Error(`Name is required for item at index ${index}`);
       }
       if (item.UniqueId === undefined) {
-        return res.status(400).json({
-          success: false,
-          message: `UniqueId is required for item '${item.name}'`,
-        });
+        console.log(`❌ Missing UniqueId at index ${index}:`, item);
+        throw new Error(`UniqueId is required for item '${item.name}'`);
       }
-    }
 
-   
+      return {
+        name: item.name.trim(),
+        UniqueId: Number(item.UniqueId),
+        Pieces: Number(item.Pieces),
+        quantity: Number(item.quantity) || 0,
+        unit: item.unit?.trim() || "-",
+        supplier: item.supplier?.trim() || "",
+        remarks: item.remarks?.trim() || ""
+      };
+    });
+
     try {
       const insertedMaterials = await RawMaterial.insertMany(materials, {
-        ordered: false, 
+        ordered: false,
       });
 
       return res.status(201).json({
@@ -42,45 +47,50 @@ const addRawMaterialusingpostman = async (req, res) => {
         message: `${insertedMaterials.length} raw materials added successfully`,
         data: insertedMaterials,
       });
+
     } catch (insertError) {
-      if (insertError.name === "ValidationError" || insertError.writeErrors) {
-        const errors = [];
+      const errors = [];
 
-        // For bulk inserts, Mongoose stores failed docs in `writeErrors`
-        if (insertError.writeErrors) {
-          insertError.writeErrors.forEach((err) => {
-            const doc = err.err.op || {};
-            errors.push({
-              UniqueId: doc.UniqueId,
-              name: doc.name,
-              reason: err.err.errmsg || err.err.message,
-            });
-          });
-        } else {
-          // Single validation error (not bulk)
+      // For duplicate or MongoDB-level write errors
+      if (insertError.writeErrors) {
+        insertError.writeErrors.forEach((err) => {
+          const doc = err.err.op || {};
+
+          console.log("❌ FAILED TO INSERT:", doc);
+          console.error("🔍 ERROR:", err.err.message || err.err.errmsg);
+
           errors.push({
-            reason: insertError.message,
+            UniqueId: doc.UniqueId,
+            name: doc.name,
+            reason: err.err.message || err.err.errmsg,
           });
-        }
-
-        return res.status(400).json({
-          success: false,
-          message: "Some raw materials failed validation",
-          errors,
         });
       }
 
-      throw insertError; // rethrow if not validation-related
+      // For Mongoose validation errors (CastError, required, etc.)
+      if (insertError.name === "ValidationError") {
+        console.log("❌ Validation error:", insertError.message);
+        errors.push({ reason: insertError.message });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: "Some raw materials failed validation",
+        errors,
+      });
     }
+
   } catch (error) {
-    console.error("Error adding raw materials:", error);
-    res.status(500).json({
+    console.error("Server error while adding raw materials:", error);
+    return res.status(500).json({
       success: false,
       message: "Server error while adding raw materials",
       error: error.message,
     });
   }
 };
+
+
 
 
 const addProduct = async (req, res) => {
@@ -221,6 +231,56 @@ const addProductMaterial = async (req, res) => {
     });
   }
 };
+
+
+
+const addonebyone = async (req, res) => {
+  try {
+    const item = req.body;
+
+    // BASIC VALIDATION
+    if (!item || !item.UniqueId || !item.name || !item.Pieces) {
+      return res.status(400).json({
+        success: false,
+        message: "UniqueId, name, and Pieces are required fields"
+      });
+    }
+
+    // CLEAN INPUT
+    const cleanItem = {
+      name: item.name.trim(),
+      UniqueId: Number(item.UniqueId),
+      Pieces: Number(item.Pieces),
+      category: item.category?.trim() || "OTHERS",
+      quantity: Number(item.quantity) || 0,
+      unit: item.unit?.trim() || "-",
+      supplier: item.supplier?.trim() || "",
+      remarks: item.remarks?.trim() || ""
+    };
+
+    // UPSERT (insert if not exist → update if exist)
+    const saved = await RawMaterial.findOneAndUpdate(
+      { UniqueId: cleanItem.UniqueId },  // filter
+      { $set: cleanItem },               // update values
+      { upsert: true, new: true }        // create if not exists
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Raw material inserted/updated successfully",
+      data: saved
+    });
+
+  } catch (error) {
+    console.error("Error inserting raw material:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while inserting raw material",
+      error: error.message
+    });
+  }
+};
+
 
 
 module.exports = { addRawMaterialusingpostman , addProduct , addProductMaterial };
